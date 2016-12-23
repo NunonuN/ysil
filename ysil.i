@@ -3,120 +3,27 @@ DEGREE= 0.0174533;
 /* ================
  *  Error messages
  * ================ */
-local BAD_DATA_TYPE, INCONSISTENCY;
+local BAD_DATA_TYPE, INCONSISTENCY, ORIGIN;
 BAD_DATA_TYPE= "BAD DATA TYPE for ";
 INCONSISTENCY= "INCONSISTENCY between ";
+ORIGIN= " MUST CONTAIN THE ORIGIN.";
 /** ---------------- **/
-
-
-func ysil_uniform_disc(x, radi, centrs, angs=, norm=)
-/* DOCUMENT discs= ysil_uniform_disc(x, radi, centrs, angs=, norm=);
- *
- * Returns a square array containing uniform elliptical discs, eventually rotated by some
- * angle. The array is built upon a (X, transpose(X)) mesh.
- * CENTRS defaults to [0, 0] if there is only one disc and no CENTRS array is input.
- * Otherwise, the CENTRS array shall have dimensions [2, 2, n], where n is the number of
- * discs. CENTRS(1, ) and CENTRS(2, ) correspond respectively to the X- and Y-coordinates of
- * the centres of all discs.
- *
- * VARIABLES
- * x= double, square array of X-coordinates.
- * radi= double, the radii of the discs (semi-minor and semi-major axes), in units of X.
- * centrs= double, the centres of the discs, in units of X.
- *
- * KEYWORDS
- * angs= double, angles of rotation of the ellipses, counted anticlockwise from the X-axis,
- *       in degrees. Default: angs= array(double, number_of_discs).
- * norm= int, if TRUE (1, 1.0 or 1n) the final array is normalised to the total flux.
- *       Default: norm= 1n.
- *
- * EXAMPLES
- * 1. Uniform disc, FOV of 10mas with 500 pixels per side of the square array, X-axis of 4mas,
- *    Y-axis of 2mas, centred at the origin of the coordinate system, rotated 10 degrees.
- *
- *    x= span(-5, 5, 500)(, -:1:500);
- *    disc= ysil_uniform_disc(x, [4., 2.], angs= 10);
- *
- * 2. Three uniform discs, FOV of 20mas with 300 pixels per side of the square array, X-axes
- *    of 2, 3.5 and 5.6mas, Y-axes of 4, 3.5 and 1.3mas, centred at [-6, 0]mas, [5, 5.5]mas
- *    and [4, -7]mas, rotated by 30, 0 and -160degrees.
- *
- *    x= span(-10, 10, 300)(, -:1:300);
- *    discs= ysil_uniform_disc(x, [[2, 4], [3.5, 3.5], [5.6, 1.3]], [[-6, 0], [5, 5.5],
- *                             [4, -7]], angs= [30, 0, -160]);
- *
- * HISTORY
- * Revision 0.1 2016/12/16 19:05:28 Nuno Gomes
- *  - First release of the function.
- *
- * SEE ALSO: ysil_gaussian_disc.
- ** --------------------------------------------------------------------------------------- **/
-{
-  // Set-up
-  norm= (is_void(norm) ? 1n : int(norm));
-  local y, a, b, n;
-  y= transpose(x);
-  a= radi(1, );
-  b= radi(2, );
-  if (dimsof(radi)(1)== 1) radi= radi(, -);
-  n= dimsof(radi)(0);
-  if (!is_array(centrs) && n== 1) centrs= [0, 0];
-  if (is_array(angs)) angs*= DEGREE;
-  else angs= array(double, n);
-  // Checks
-  if (!is_numerical(x)     ) error, BAD_DATA_TYPE+"'x'.";
-  if (!is_numerical(a)     ) error, BAD_DATA_TYPE+"'radi'.";
-  if (!is_numerical(b)     ) error, BAD_DATA_TYPE+"'radi'.";
-  if (dimsof(centrs)(1)!= 1 && dimsof(centrs)(0)!= n)
-    error, INCONSISTENCY+"'radi' and 'centrs'.";
-  if (numberof(angs)!= n   ) error, INCONSISTENCY+"'radi' and 'angs'.";
-
-  // Build discs
-  local dims, discs, disc, xc, yc, xr, yr, rho;
-  dims= dimsof(x);
-  discs= array(double, dims);
-  disc= xc= yc= xr= yr= rho= array(double, dims)(, , -:1:n);
-
-  for (i= 1; i<= n; ++i) {
-    // centres of discs
-    xc(, , i)= x - centrs(, i)(1);
-    yc(, , i)= y - centrs(, i)(2);
-    // rotate discs
-    xr(, , i)=  cos(angs(i))*xc(, , i) + sin(angs(i))*yc(, , i);
-    yr(, , i)= -sin(angs(i))*xc(, , i) + cos(angs(i))*yc(, , i);
-    // build discs
-    local idx;
-    rho(, , i)= sqrt(xr(, , i)*xr(, , i) / (a(i)*a(i)) + yr(, , i)*yr(, , i) / (b(i)*b(i)));
-    idx= where(rho(, , i)<= 1.0);
-    dsc= disc(, , i);
-    dsc(idx)= 1.0;
-    disc(, , i)= dsc;
-    discs += disc(, , i);
-  }
-
-  // Normalise
-  if (norm) discs/= sum(discs);
-
-  return discs;
-}
-/** ----------------------------------------- oOo ----------------------------------------- **/
-
 
 
 func ysil_gaussian_disc(x, sigs, centrs, angs=, amps=, norm=)
 /* DOCUMENT discs= ysil_gaussian_disc(x, sigs, centrs, angs=, amps=, norm=);
  *
  * Returns a square array containing Gaussian elliptical discs, eventually rotated by some
- * angle. The array is built upon a (X, transpose(X)) mesh.
+ * angles. The array is built upon a (X, transpose(X)) mesh.
  * CENTRS defaults to [0, 0] if there is only one disc and no CENTRS array is input.
  * Otherwise, the CENTRS array shall have dimensions [2, 2, n], where n is the number of
  * discs. CENTRS(1, ) and CENTRS(2, ) correspond respectively to the X- and Y-coordinates of
  * the centres of all discs.
- * The keyword AMPS is facultative. If it is ommited, the amplitudes of the Gaussian i is
- * equal to
+ * The keyword AMPS is facultative. If it is ommited, the amplitude of Gaussian i is equal to
+ *
  *                                   1.0
- *                       ---------------------------.
- *                          ------------------------
+ *                       -----------------------------.
+ *                          -------------------------
  *                        \/ 2 * π * σ_x(i) * σ_y(i)
  *
  * Otherwise, each Gaussian i is equal to
@@ -130,7 +37,7 @@ func ysil_gaussian_disc(x, sigs, centrs, angs=, amps=, norm=)
  *
  * VARIABLES
  * x= double, square array of X-coordinates.
- * sigss= double, the HWHM of the discs (semi-minor and semi-major axes), in units of X.
+ * sigs= double, the HWHM of the discs (semi-minor and semi-major axes), in units of X.
  * centrs= double, the centres of the discs, in units of X.
  *
  * KEYWORDS
@@ -175,6 +82,7 @@ func ysil_gaussian_disc(x, sigs, centrs, angs=, amps=, norm=)
   else angs= array(double, n);
   // Checks
   if (!is_numerical(x)     ) error, BAD_DATA_TYPE+"'x'.";
+  if (max(x(, 1)) * min(x(, 1))> 0.0) error, "'x'"+ORIGIN;
   if (!is_numerical(sigx)  ) error, BAD_DATA_TYPE+"'sigs'.";
   if (!is_numerical(sigy)  ) error, BAD_DATA_TYPE+"'sigs'.";
   if (dimsof(centrs)(1)!= 1 && dimsof(centrs)(0)!= n)
@@ -281,6 +189,7 @@ func ysil_limb_darkened_disc(x, radi, centrs, l0=, u=, norm=)
   rads= transpose(radi(, -:1:2));
   // Checks
   if (!is_numerical(x)        ) error, BAD_DATA_TYPE+"'x'.";
+  if (max(x(, 1)) * min(x(, 1))> 0.0) error, "'x'"+ORIGIN;
   if (!is_numerical(rads(1, ))) error, BAD_DATA_TYPE+"'radi'.";
   if (!is_numerical(rads(2, ))) error, BAD_DATA_TYPE+"'radi'.";
   if (dimsof(centrs)(1)!= 1 && dimsof(centrs)(0)!= n)
@@ -320,8 +229,95 @@ func ysil_limb_darkened_disc(x, radi, centrs, l0=, u=, norm=)
 
 
 
-func ysil_gaussian_ring(..)
+func ysil_uniform_disc(x, radi, centrs, angs=, norm=)
+/* DOCUMENT discs= ysil_uniform_disc(x, radi, centrs, angs=, norm=);
+ *
+ * Returns a square array containing uniform elliptical discs, eventually rotated by some
+ * angle. The array is built upon a (X, transpose(X)) mesh.
+ * CENTRS defaults to [0, 0] if there is only one disc and no CENTRS array is input.
+ * Otherwise, the CENTRS array shall have dimensions [2, 2, n], where n is the number of
+ * discs. CENTRS(1, ) and CENTRS(2, ) correspond respectively to the X- and Y-coordinates of
+ * the centres of all discs.
+ *
+ * VARIABLES
+ * x= double, square array of X-coordinates.
+ * radi= double, the radii of the discs (semi-minor and semi-major axes), in units of X.
+ * centrs= double, the centres of the discs, in units of X.
+ *
+ * KEYWORDS
+ * angs= double, angles of rotation of the ellipses, counted anticlockwise from the X-axis,
+ *       in degrees. Default: angs= array(double, number_of_discs).
+ * norm= int, if TRUE (1, 1.0 or 1n) the final array is normalised to the total flux.
+ *       Default: norm= 1n.
+ *
+ * EXAMPLES
+ * 1. Uniform disc, FOV of 10mas with 500 pixels per side of the square array, X-axis of 4mas,
+ *    Y-axis of 2mas, centred at the origin of the coordinate system, rotated 10 degrees.
+ *
+ *    x= span(-5, 5, 500)(, -:1:500);
+ *    disc= ysil_uniform_disc(x, [4., 2.], angs= 10);
+ *
+ * 2. Three uniform discs, FOV of 20mas with 300 pixels per side of the square array, X-axes
+ *    of 2, 3.5 and 5.6mas, Y-axes of 4, 3.5 and 1.3mas, centred at [-6, 0]mas, [5, 5.5]mas
+ *    and [4, -7]mas, rotated by 30, 0 and -160degrees.
+ *
+ *    x= span(-10, 10, 300)(, -:1:300);
+ *    discs= ysil_uniform_disc(x, [[2, 4], [3.5, 3.5], [5.6, 1.3]], [[-6, 0], [5, 5.5],
+ *                             [4, -7]], angs= [30, 0, -160]);
+ *
+ * HISTORY
+ * Revision 0.1 2016/12/16 19:05:28 Nuno Gomes
+ *  - First release of the function.
+ *
+ * SEE ALSO: ysil_gaussian_disc.
+ ** --------------------------------------------------------------------------------------- **/
 {
-  
+  // Set-up
+  norm= (is_void(norm) ? 1n : int(norm));
+  local y, a, b, n;
+  y= transpose(x);
+  a= radi(1, );
+  b= radi(2, );
+  if (dimsof(radi)(1)== 1) radi= radi(, -);
+  n= dimsof(radi)(0);
+  if (!is_array(centrs) && n== 1) centrs= [0, 0];
+  if (is_array(angs)) angs*= DEGREE;
+  else angs= array(double, n);
+  // Checks
+  if (!is_numerical(x)     ) error, BAD_DATA_TYPE+"'x'.";
+  if (max(x(, 1)) * min(x(, 1))> 0.0) error, "'x'"+ORIGIN;
+  if (!is_numerical(a)     ) error, BAD_DATA_TYPE+"'radi'.";
+  if (!is_numerical(b)     ) error, BAD_DATA_TYPE+"'radi'.";
+  if (dimsof(centrs)(1)!= 1 && dimsof(centrs)(0)!= n)
+    error, INCONSISTENCY+"'radi' and 'centrs'.";
+  if (numberof(angs)!= n   ) error, INCONSISTENCY+"'radi' and 'angs'.";
+
+  // Build discs
+  local dims, discs, disc, xc, yc, xr, yr, rho;
+  dims= dimsof(x);
+  discs= array(double, dims);
+  disc= xc= yc= xr= yr= rho= array(double, dims)(, , -:1:n);
+
+  for (i= 1; i<= n; ++i) {
+    // centres of discs
+    xc(, , i)= x - centrs(, i)(1);
+    yc(, , i)= y - centrs(, i)(2);
+    // rotate discs
+    xr(, , i)=  cos(angs(i))*xc(, , i) + sin(angs(i))*yc(, , i);
+    yr(, , i)= -sin(angs(i))*xc(, , i) + cos(angs(i))*yc(, , i);
+    // build discs
+    local idx;
+    rho(, , i)= sqrt(xr(, , i)*xr(, , i) / (a(i)*a(i)) + yr(, , i)*yr(, , i) / (b(i)*b(i)));
+    idx= where(rho(, , i)<= 1.0);
+    dsc= disc(, , i);
+    dsc(idx)= 1.0;
+    disc(, , i)= dsc;
+    discs += disc(, , i);
+  }
+
+  // Normalise
+  if (norm) discs/= sum(discs);
+
+  return discs;
 }
 /** ----------------------------------------- oOo ----------------------------------------- **/
