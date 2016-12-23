@@ -1,3 +1,36 @@
+/*********************************************************************************************
+ *********************************************************************************************
+ ****                                                                                     ****
+ **                                          YSIL                                           **
+ **                             Yorick Synthetic Image Library                              **
+ **                                                                                         **
+ ****                                                                                     ****
+ *********************************************************************************************
+ *********************************************************************************************
+ ****                                                                                     ****
+ **                                                                                         **
+ ** DOCUMENT YSIL v0.1                                                                      **
+ **                                                                                         **
+ ** A Yorick Synthetic Image Library for the interferometric image reconstruction cookbook. **
+ ** The package contains basic functions that can be used to build astronomical objects,    **
+ ** such as stellar clusters, stellar photospheres or young stellar objects.                **
+ **                                                                                         **
+ ** Total number of functions in the package: 3.                                            **
+ **                                                                                         **
+ ** LIST OF FUNCTIONS                                                                       **
+ ** =================                                                                       **
+ ** ysil_gaussian_disc................ Creates a discs with Gaussian profile.               **
+ ** ysil_limb_darkened_disc........... Creates discs with limb darkened profile.            **
+ ** ysil_uniform_disc................. Creates uniform discs.                               **
+ **                                                                                         **
+ ** HISTORY                                                                                 **
+ ** Revision 0.1 2016/12/23 13:20:20 Nuno Gomes                                             **
+ **  - FIRST RELEASE of 'ysil.i'.                                                           **
+ **                                                                                         **
+ ****                                                                                     ****
+ *********************************************************************************************
+ *********************************************************************************************/
+
 DEGREE= 0.0174533;
 
 /* ================
@@ -64,7 +97,7 @@ func ysil_gaussian_disc(x, sigs, centrs, angs=, amps=, norm=)
  *
  * HISTORY
  * Revision 0.1 2016/12/17 19:30:53 Nuno Gomes
- *  - First release of the function.
+ *  - FIRST RELEASE of the function.
  *
  * SEE ALSO: ysil_uniform_disc.
  ** --------------------------------------------------------------------------------------- **/
@@ -174,7 +207,7 @@ func ysil_limb_darkened_disc(x, radi, centrs, l0=, u=, norm=)
  * 
  * HISTORY
  * Revision 0.1 2016/12/18 09:01:46 Nuno Gomes
- *  - First release of the function.
+ *  - FIRST RELEASE of the function.
  *
  * SEE ALSO: ysil_uniform_disc.
  ** --------------------------------------------------------------------------------------- **/ 
@@ -267,7 +300,7 @@ func ysil_uniform_disc(x, radi, centrs, angs=, norm=)
  *
  * HISTORY
  * Revision 0.1 2016/12/16 19:05:28 Nuno Gomes
- *  - First release of the function.
+ *  - FIRST RELEASE of the function.
  *
  * SEE ALSO: ysil_gaussian_disc.
  ** --------------------------------------------------------------------------------------- **/
