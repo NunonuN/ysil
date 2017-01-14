@@ -9,21 +9,24 @@
  *********************************************************************************************
  ****                                                                                     ****
  **                                                                                         **
- ** DOCUMENT YSIL v0.1                                                                      **
+ ** DOCUMENT YSIL v0.2                                                                      **
  **                                                                                         **
  ** A Yorick Synthetic Image Library for the interferometric image reconstruction cookbook. **
  ** The package contains basic functions that can be used to build astronomical objects,    **
  ** such as stellar clusters, stellar photospheres or young stellar objects.                **
  **                                                                                         **
- ** Total number of functions in the package: 3.                                            **
+ ** Total number of functions in the package: 4.                                            **
  **                                                                                         **
  ** LIST OF FUNCTIONS                                                                       **
  ** =================                                                                       **
+ ** ysil_convolve..................... Computes convolution between arrays.                 **
  ** ysil_gaussian_disc................ Creates a discs with Gaussian profile.               **
  ** ysil_limb_darkened_disc........... Creates discs with limb darkened profile.            **
  ** ysil_uniform_disc................. Creates uniform discs.                               **
  **                                                                                         **
  ** HISTORY                                                                                 **
+ ** Revision 0.2 2017/01/14 19:35:17 Nuno Gomes                                             **
+ **  - ADDED function 'ysil_convolve'.                                                      **
  ** Revision 0.1 2016/12/23 13:20:20 Nuno Gomes                                             **
  **  - FIRST RELEASE of 'ysil.i'.                                                           **
  **                                                                                         **
@@ -31,7 +34,9 @@
  *********************************************************************************************
  *********************************************************************************************/
 
-DEGREE= 0.0174533;
+
+DEGREE= 0.0174533; // conversion from degrees to radians
+
 
 /* ================
  *  Error messages
@@ -41,6 +46,53 @@ BAD_DATA_TYPE= "BAD DATA TYPE for ";
 INCONSISTENCY= "INCONSISTENCY between ";
 ORIGIN= " MUST CONTAIN THE ORIGIN.";
 /** ---------------- **/
+
+
+func ysil_convolve(img, filt, norm, rmnd=)
+/* DOCUMENT new_img= ysil_convolve(img, filt, norm, rmnd=);
+ *
+ * Computes the discrete convolution between array IMG and kernel FILT by means of a FFT.
+ * Note that both arrays must have the same dimensions.
+ * If NORM is not nil or zero, the convolution is normalised.
+ * 'rmnd' controls how much is added to the sum of the convolution in case it is zero and
+ * NORM is equal to 1. It defaults to 1e-8.
+ *
+ * VARIABLES
+ * img= array of doubles, to be convolved with FILT.
+ * filt= array of doubles, to be convolved with IMG.
+ * norm= integer, works as a switch. If on (non nil), the convolution is normalised.
+ *       Default: norm= 0.
+ *
+ * KEYWORDS
+ * rmnd= double, number to be added to the sum of the convolution array in case it is zero
+ *       and NORM is 1. Default: rmnd= 1e-8.
+ *
+ * HISTORY
+ * Revision 0.1 2017/01/14 19:02:41 Nuno Gomes
+ *  - FIRST RELEASE of the function.
+ *
+ * SEE ALSO: ysil_gaussian_ring, fft, roll.
+ ** --------------------------------------------------------------------------------------- **/
+{
+  local real, dims, wspc, conv, sumconv;
+  norm= (!norm ? 0 : 1);
+  rmnd= (!rmnd ? 1e-8 : double(rmnd));
+  real= (!is_complex(img) && !is_complex(filt));
+  dims= dimsof(img);
+  wspc= fft_setup(dims);
+  conv= fft( fft(img, setup= wspc) * fft(roll(filt), setup= wspc), -1, setup= wspc );
+
+  if (real) conv= double(conv);
+
+  conv= 1.0/numberof(conv) * conv;
+  sumconv= sum(conv);
+
+  if (norm) conv/= (sumconv== 0 ? sumconv + rmnd : sumconv);
+
+  return conv;
+}
+/** ----------------------------------------- oOo ----------------------------------------- **/
+
 
 
 func ysil_gaussian_disc(x, sigs, centrs, angs=, amps=, norm=)
@@ -352,5 +404,140 @@ func ysil_uniform_disc(x, radi, centrs, angs=, norm=)
   if (norm) discs/= sum(discs);
 
   return discs;
+}
+/** ----------------------------------------- oOo ----------------------------------------- **/
+
+
+
+func ysil_gaussian_ring(x, out_radi, in_radi, centrs_out, centrs_in, sigs, angs=, norm=)
+/* DOCUMENT ring= ysil_gaussian_ring(x, out_radi, in_radi, centrs_out, centrs_in, sigs,
+ *                                   angs=, norm=);
+ *
+ * Returns a square array containing Gaussian elliptical rings, eventually rotated by some
+ * angle. The array is built upon a (X, transpose(X)) mesh.
+ * The widths of the rings are defined by variables OUT_RADI and IN_RADI, ie., the ring is
+ * built by subtracting a uniform elliptical disc of semi- major and minor axes IN_RADI to
+ * a uniform elliptical disc of semi- major and minor axes OUT_RADI.
+ * CENTRS_OUT and CENTRS_IN arrays shall have dimensions [2, 2, n], where n is the number of
+ * rings. CENTRS_OUT/IN(1, ) and CENTRS_OUT/IN(2, ) correspond respectively to the X- and
+ * Y-coordinates of the centres of all outer/inner rings.
+ * The ring is created by convolving an uniform ring with a Gaussian point spread function
+ * (PSF).
+ *
+ * VARIABLES
+ * x= double, square array of X-coordinates.
+ * out_radi= double, the radii of the outer discs (semi-minor and semi-major axes), in units
+ *           of X.
+ * in_radi= double, the radii of the inner discs (semi-minor and semi-major axes), in units
+ *          of X.
+ * centrs_out= double, the centres of the outer discs, in units of X.
+ * centrs_in= double, the centres of the inner discs, in units of X.
+ * sigs= double, HWHM of the Gaussian used as PSF.
+ *
+ * KEYWORDS
+ * angs= double, angles of rotation of the ellipses, counted anticlockwise from the X-axis,
+ *       in degrees. Default: angs= array(double, number_of_discs).
+ * norm= int, if TRUE (1, 1.0 or 1n) the final array is normalised to the total flux.
+ *       Default: norm= 1n.
+ *
+ * EXAMPLES
+ * 1. Gaussian ring, HWHM of 1mas, FOV of 10mas with 300 pixels per side of the square array,
+ *    outer semi-X and -Y axes of 4.5mas and 3.5mas, respectively, inner semi-X and -Y axes of
+ *    3mas and 2mas, centred at the origin of the coordinate system, inner void vertically
+ *    displaced -0.5mas, all structure rotated 15 degrees.
+ *
+ *    x= span(-5, 5, 400)(, -:1:400);
+ *    ring= ysil_gaussian_ring(x, [4.5, 3.5], [3., 2.], [0, 0], [0, -0.5], 1.0, angs= 15);
+ *
+ * 2. Two Gaussian rings, PSFs HWHMs of 0.5 and 0.7mas, FOV of 20mas with 500 pixels per side
+ *    of the square array, outer semi-X axes of 3 and 6mas, outer semi-Y axes of 2.5
+ *    and 4.3mas, inner semi-X axes of 2.0 and 4.2mas, inner semi-Y axes of 1.5 and 2.9mas,
+ *    centred at [-5.5, -6]mas and [2.5, 2.1]mas, inner voids vertically displaced respectivally
+ *    by -0.2 and 0.5mas, rings rotated by 30 and -45degrees.
+ *
+ *    x= span(-10, 10, 500)(, -:1:500);
+ *    rings= ysil_gaussian_ring(x, [[3.5, 1.5], [6.6, 4.3]], [[-5, -1], [3, 4.5]],
+ *    angs= [30, -45]);
+ *
+ * HISTORY
+ * Revision 0.1 2016/12/26 17:48:39 Nuno Gomes
+ *  - FIRST RELEASE of the function.
+ *
+ * SEE ALSO: ysil_gaussian_disc.
+ ** --------------------------------------------------------------------------------------- **/
+{
+  // Set-up
+  norm= (is_void(norm) ? 1n : int(norm));
+  local y, a, b, n;
+  y= transpose(x);
+  a_out= out_radi(1, );
+  b_out= out_radi(2, );
+  a_in= in_radi(1, );
+  b_in= in_radi(2, );
+  if (dimsof(out_radi)(1)== 1) out_radi= out_radi(, -);
+  if (dimsof(in_radi)(1)== 1) in_radi= in_radi(, -);
+  n= dimsof(out_radi)(0);
+  if (dimsof(centrs_out)(1)== 1) centrs_out= centrs_out(, -);
+  if (dimsof(centrs_in)(1)== 1) centrs_in= centrs_in(, -);
+  if (is_array(angs)) angs*= DEGREE;
+  else angs= array(double, n);
+  // Checks
+  if (!is_numerical(x)) error, BAD_DATA_TYPE+"'x'.";
+  if (max(x(, 1)) * min(x(, 1))> 0.0) error, "'x'"+ORIGIN;
+  if (!is_numerical(a_out)) error, BAD_DATA_TYPE+"'out_radi'.";
+  if (!is_numerical(b_out)) error, BAD_DATA_TYPE+"'out_radi'.";
+  if (!is_numerical(a_in)) error, BAD_DATA_TYPE+"'in_radi'.";
+  if (!is_numerical(b_in)) error, BAD_DATA_TYPE+"'in_radi'.";
+  if (dimsof(centrs_out)(1)!= 1 && dimsof(centrs_out)(0)!= n)
+    error, INCONSISTENCY+"'radi' and 'centrs'.";
+  if (!is_numerical(sigs)) error, BAD_DATA_TYPE+"'sigs'.";
+  if (numberof(sigs)!= n) error, INCONSISTENCY+"'radi' and 'sigs'.";
+  if (numberof(angs)!= n) error, INCONSISTENCY+"'radi' and 'angs'.";
+
+  // Build discs
+  local dims, rings, disc_out, disc_in, ring, psf;
+  local xc_out, yc_out, xc_in, yc_in, xr_out, yr_out, xr_in, yr_in, rho_out, rho_in;
+  dims= dimsof(x);
+  rings= array(double, dims);
+  disc_out= disc_in= ring= psf= array(double, dims)(, , -:1:n);
+  xc_out= yc_out= xc_in= yc_in= xr_out= yr_out= xr_in= yr_in= rho_out= rho_in=
+    array(double, dims)(, , -:1:n);
+
+  for (i= 1; i<= n; ++i) {
+    // centres of rings
+    xc_out(, , i)= x - centrs_out(, i)(1);
+    yc_out(, , i)= y - centrs_out(, i)(2);
+    xc_in(, , i)= x - centrs_in(, i)(1);
+    yc_in(, , i)= y - centrs_in(, i)(2);
+    // rotate rings
+    xr_out(, , i)=  cos(angs(i))*xc_out(, , i) + sin(angs(i))*yc_out(, , i);
+    yr_out(, , i)= -sin(angs(i))*xc_out(, , i) + cos(angs(i))*yc_out(, , i);
+    xr_in(, , i)=  cos(angs(i))*xc_in(, , i) + sin(angs(i))*yc_in(, , i);
+    yr_in(, , i)= -sin(angs(i))*xc_in(, , i) + cos(angs(i))*yc_in(, , i);
+    // build rings
+    local idx_out, idx_in, dsc_out, dsc_in;
+    rho_out(, , i)= sqrt(xr_out(, , i)*xr_out(, , i) / (a_out(i)*a_out(i)) +
+                         yr_out(, , i)*yr_out(, , i) / (b_out(i)*b_out(i)));
+    rho_in(, , i)= sqrt(xr_in(, , i)*xr_in(, , i) / (a_in(i)*a_in(i)) +
+                         yr_in(, , i)*yr_in(, , i) / (b_in(i)*b_in(i)));
+    idx_out= where(rho_out(, , i)<= 1.0);
+    idx_in= where(rho_in(, , i)<= 1.0);
+    dsc_out= disc_out(, , i);
+    dsc_in= disc_in(, , i);
+    dsc_out(idx_out)= 1.0;
+    dsc_in(idx_in)= 1.0;
+    disc_out(, , i)= dsc_out;
+    disc_in(, , i)= dsc_in;
+    ring(, , i)= disc_out(, , i) - disc_in(, , i);
+    psf(, , i)= ysil_gaussian_disc(x, [sigs(i), sigs(i)]);
+    ring(, , i)= ysil_convolve(ring(, , i), psf(, , i));
+    ring(, , i)+= abs(min(ring(, , i)));
+    rings += ring(, , i);
+  }
+
+  // Normalise
+  if (norm) rings/= sum(rings);
+
+  return rings;
 }
 /** ----------------------------------------- oOo ----------------------------------------- **/
