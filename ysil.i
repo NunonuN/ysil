@@ -449,15 +449,16 @@ func ysil_gaussian_ring(x, out_radi, in_radi, centrs_out, centrs_in, sigs, angs=
  *    x= span(-5, 5, 400)(, -:1:400);
  *    ring= ysil_gaussian_ring(x, [4.5, 3.5], [3., 2.], [0, 0], [0, -0.5], 1.0, angs= 15);
  *
- * 2. Two Gaussian rings, PSFs HWHMs of 0.5 and 0.7mas, FOV of 20mas with 500 pixels per side
- *    of the square array, outer semi-X axes of 3 and 6mas, outer semi-Y axes of 2.5
- *    and 4.3mas, inner semi-X axes of 2.0 and 4.2mas, inner semi-Y axes of 1.5 and 2.9mas,
- *    centred at [-5.5, -6]mas and [2.5, 2.1]mas, inner voids vertically displaced respectivally
- *    by -0.2 and 0.5mas, rings rotated by 30 and -45degrees.
+ * 2. Two normalised Gaussian rings, PSFs HWHMs of 0.5 and 0.4mas, FOV of 20mas with 500 pixels
+ *    per side of the square array, outer semi-X axes of 6.1 and 3mas, outer semi-Y axes of 3.8
+ *    and 1.7mas, inner semi-X axes of 5 and 2mas, inner semi-Y axes of 2.9 and 0.9mas, centred
+ *    at [-0.3, -3.5]mas and [1, 6]mas (outer discs), and [-0.2, -3.3]mas and [1, 6.45]mas
+ *    (inner discs), rings rotated by -40 and 0 degrees.
  *
  *    x= span(-10, 10, 500)(, -:1:500);
- *    rings= ysil_gaussian_ring(x, [[3.5, 1.5], [6.6, 4.3]], [[-5, -1], [3, 4.5]],
- *    angs= [30, -45]);
+ *    rings= ysil_gaussian_ring(x, [[6.1, 3.8], [3.0, 1.7]], [[5.0, 2.9], [2.0, 0.9]],
+ *                                 [[-0.3, -3.5], [1.0, 6.0] ], [[-0.2, -3.3], [1.0, 6.45]],
+ *                                 [0.5, 0.4], angs= [-40.0, 0.0], norm= 1);
  *
  * HISTORY
  * Revision 0.1 2016/12/26 17:48:39 Nuno Gomes
