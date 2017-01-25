@@ -30,14 +30,14 @@ Launch Yorick and load `"ysil.i"`:
         x= span(-5, 5, 500)(, -:1:500);
         disc= ysil_uniform_disc(x, [4., 2.], angs= 10);
 
-![Alt text](/figures/uniform_disc.png?raw=true "Uniform disc")
+<img src="/figures/uniform_disc.png" width="500" />
 
 * Same as previous example, but with a Gaussian disc, X- and Y- axes respectively of 3 and 4mas, rotated -20 degrees:
 
         x= span(-5, 5, 500)(, -:1:500);
         disc= ysil_gaussian_disc(x, [3., 2.], angs= -20);
 
-![Alt text](/figures/gaussian_disc.png?raw=true "Gaussian disc")
+<img src="/figures/gaussian_disc.png" width="500" />
 
 * Three normalised Gaussian rings, PSFs HWHMs of 0.5, 0.3 and 0.4mas, FOV of 20mas with 500 pixels per side of the square array, outer semi-X axes of 6.1, 3.5 and 3mas, outer semi-Y axes of 3.8, 1.5 and 1.7mas, inner semi-X axes of 5, 1.9 and 2mas, inner semi-Y axes of 2.9, 0.6 and 0.9mas, centred at [4.0, 0.0]mas, [-5.5, -5.5] and [-5.0, 6.0]mas (outer discs), and [4.2, 0.2]mas, [-5.5, -5.9]mas, [-5.0, 6.45]mas (inner discs), rings rotated by -60, 30 and 0 degrees:
 
@@ -51,11 +51,11 @@ Launch Yorick and load `"ysil.i"`:
                             angs= [-60.0, 30.0, 0.0]
                            );
 
-![Alt text](/figures/gaussian_rings.png?raw=true "Gaussian rings")
+<img src="/figures/gaussian_rings.png" width="500" />
 
 * Single stellar photosphere with radius of 3mas, centred at the FOV, with u= 0.2:
 
         x= span(-5, 5, 300)(, -:1:300);
         star= ysil_limb_darkened_disc(x, 3, [0, 0], u= 0.2);
 
-![Alt text](/figures/star.png?raw=true "Stellar photosphere")
+<img src="/figures/star.png" width="500" />
