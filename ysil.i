@@ -68,12 +68,12 @@ func ysil_convolve(img, filt, norm, rmnd=)
  * VARIABLES
  * img= array of doubles, to be convolved with FILT.
  * filt= array of doubles, to be convolved with IMG.
- * norm= integer, works as a switch. If on (non nil), the convolution is normalised.
- *       Default: norm= 0.
+ * norm= int, if TRUE (1, 1.0 or 1n), the convolution is normalised.
+ *       Default: norm= 0n.
  *
  * KEYWORDS
  * rmnd= double, number to be added to the sum of the convolution array in case it is zero
- *       and NORM is 1. Default: rmnd= 1e-8.
+ *       and NORM is 1n. Default: rmnd= 1e-8.
  *
  * HISTORY
  * Revision 0.1 2017/01/14 19:02:41 Nuno Gomes
@@ -82,8 +82,9 @@ func ysil_convolve(img, filt, norm, rmnd=)
  * SEE ALSO: ysil_gaussian_ring, fft, roll.
  ** --------------------------------------------------------------------------------------- **/
 {
+  // Setu-up
   local real, dims, wspc, conv, sumconv;
-  norm= (!norm ? 0 : 1);
+  norm= (!norm ? 0n : 1n);
   rmnd= (!rmnd ? 1e-8 : double(rmnd));
   real= (!is_complex(img) && !is_complex(filt));
   dims= dimsof(img);
@@ -95,6 +96,7 @@ func ysil_convolve(img, filt, norm, rmnd=)
   conv= 1.0/numberof(conv) * conv;
   sumconv= sum(conv);
 
+  // Normalise
   if (norm) conv/= (sumconv== 0 ? sumconv + rmnd : sumconv);
 
   return conv;
