@@ -1,6 +1,6 @@
 # Installation of YSIL
 
-## Prerequesites
+## Prerequisites
 You must have [Yorick](http://dhmunro.github.io/yorick-doc) installed in order to use YSIL.
 
 ## Installation
