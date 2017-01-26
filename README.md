@@ -1,5 +1,6 @@
 # YSIL
-YSIL stands for **Y**orick **S**ynthetic **I**mage **L**ibrary, and it consists of a package written in [Yorick](http://dhmunro.github.io/yorick-doc), containing five basic functions, that can be used to build astronomical objects, such as stellar clusters, stellar photospheres or young stellar objects.
+YSIL stands for **Y**orick **S**ynthetic **I**mage **L**ibrary, and it consists of a package written in [Yorick](http://dhmunro.github.io/yorick-doc), containing five basic functions, that can be used to build synthetic astronomical objects, such as stellar clusters, stellar photospheres or young stellar objects.
+These objects can be useful for interferometric simulations, namely when using software tools such as [Aspro2](http://www.jmmc.fr/aspro_page.htm).
 
 See [`USAGE.md`](USAGE.md) for a brief description on how to install and use YSIL.
 
